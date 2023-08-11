@@ -1,0 +1,16 @@
+#ignore these directories 
+data/
+test/
+error_logs/
+logs/
+results/
+intermediate/
+
+# matches any files and directories with the name 
+CDS_filtered
+results
+intermediate
+assemblies
+slurm*
+BUSCO
+*log

@@ -1,0 +1,9 @@
+name: busco-env2 
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+dependencies:
+  - busco= 
+  - augustus= 
+  

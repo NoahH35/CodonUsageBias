@@ -1,0 +1,7 @@
+name: codonw-env
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+dependencies:
+  - codonw=1.4.4
