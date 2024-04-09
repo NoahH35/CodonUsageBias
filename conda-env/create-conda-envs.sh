@@ -15,7 +15,7 @@ mamba create -n busco-env
     mamba install -c conda-forge -c bioconda busco=5.4.7
     source deactivate 
 
-mamba env create -f r-env2.yml
+mamba env create -f r-env.yml
 
 ) 2> error_create_conda_env.log 
 

@@ -1,4 +1,4 @@
-name: r-env2
+name: r-env
 channels:
   - defaults
   - conda-forge
@@ -12,4 +12,7 @@ dependencies:
   - r-openxlsx
   - r-ggpubr 
   - r-ggplot2 
-
+  - r-tidyverse
+  - r-jsonlite
+  - r-xlsx
+  - r-seqinr

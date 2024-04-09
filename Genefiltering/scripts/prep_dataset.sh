@@ -73,8 +73,11 @@ nohup bash perform_busco.sh &> perform_busco.log &
 wait 
 rm perform_busco.sh 
 
+# add busco steps here if it works to filter them and find the ribosomal genes 
+
 #finalize outputs  
 mkdir results
+mkdir results/BUSCO
 mkdir results/assemblies 
 cp CDS_filtered/*/filtered*faa results/assemblies 
 

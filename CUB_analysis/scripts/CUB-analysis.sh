@@ -1,8 +1,12 @@
 #!/bin/bash
 #this script performs CUB-analysis, using both scripts biokit.sh and codonw.sh 
 (
+
+level=$1 
+
 cd ..
 cp -r Genefiltering/results/assemblies CUB_analysis
+
 cd CUB_analysis 
 
 for dir in assemblies; 
@@ -12,9 +16,53 @@ for dir in assemblies;
         done 
 cd ..
 
+# find ribosomal genes 
+bash scripts/ribosomal.sh $level #change level to desired level
+# parse this file to only keep the names
+grep -o "\w*147550" *tsv | sort | uniq > ribosomal_genes.txt #change level to desired level
+# you now have a list of ribosomal genes 
+    # find ribosomal genes in gene_filtering BUSCO output 
+    # input them as reference to codonw to analyze CAI 
+
+# make intermediate directory
+mkdir intermediate
+mkdir intermediate/ribosomal_genes
+
+cd ..
+cd Genefiltering/BUSCO/busco_out
+
+ for filename in $(cat ../../../CUB_analysis/ribosomal_genes.txt); 
+    do cat *.faa/run_sordariomycetes_odb10/busco_sequences/single_copy_busco_sequences/$filename > ${filename%.fna}combined.fna
+    done 
+
+# check if output is empty 
+ 
+for file in *combined.fna;
+do FILE="$file";
+    if [ -s "$FILE" ]; 
+     then
+        echo "all done with getting ribosomal genes for ${file%combined.fna}"
+     else 
+      echo "no ribosomal genes in busco run. Downloading ribosomal ${file%combined.fna} fasta genes from OrthoDB"
+      rm $file
+        for filename in $(cat ../../../CUB_analysis/ribosomal_genes.txt); 
+            do curl "https://data.orthodb.org/current/fasta?species=$level&id="$filename  -L -o $filename.faa
+        done 
+    fi
+done
+
+
+cd ../../..
+mv Genefiltering/BUSCO/busco_out/*at147550* CUB_analysis/intermediate/ribosomal_genes
+cd CUB_analysis
+mv *tsv intermediate/ribosomal_genes
+mv *txt intermediate/ribosomal_genes
+
+# prep analysis 
 for dir in assemblies/*; do ln -sr scripts/codonw.sh $dir; done 
 for dir in assemblies/*; do ln -sr scripts/biokit.sh $dir; done 
 
+# run biokit and codonw 
 cd assemblies 
 for dir in *
     do cd $dir
@@ -26,6 +74,10 @@ for dir in *
 
 cd .. 
 
+# run CAI analysis in some way, using a codon table made from the ribosomal genes
+codonw only uses three reference swets, (option 3-7), you cannot input your own.. 
+
+#clean up logs 
     mkdir logs 
     mkdir error_logs 
        
