@@ -9,6 +9,9 @@ Before running any scripts in the Genefiltering directory. Please do not forget 
     conda-env
         contains yaml files for all conda environments
         create-conda-envs.sh 
+        additional tools: 
+            - blast 2.15.0
+            - bedtools v2.31.1
 
     CUB 
         Genefiltering
