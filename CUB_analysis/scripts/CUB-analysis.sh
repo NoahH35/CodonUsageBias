@@ -17,51 +17,62 @@ for dir in assemblies;
 cd ..
 
 # run CAI analysis in some way, using a codon table made from the ribosomal genes
-    # for now we do a reference run, using option 3-7. 
-    # below finds ribosomal genes, but we do not use that for now because it only finds AA sequences 
+
+mkdir intermediate
+mkdir intermediate/ribosomal_genes
 
 # find ribosomal genes 
-# bash scripts/ribosomal.sh $level #change level to desired level
+cd intermediate/ribosomal_genes
+curl 'https://data.orthodb.org/current/search?query=ribosomes&level='$level -L -o ribosomes.tsv
+
 # parse this file to only keep the names
-# grep -o "\w*147550" *tsv | sort | uniq > ribosomal_genes.txt #change level to desired level
+ grep -o "\w*147550" *tsv | sort | uniq > ribosomal_genes.txt #change level to desired level
 # you now have a list of ribosomal genes 
     # find ribosomal genes in gene_filtering BUSCO output 
     # input them as reference to codonw to analyze CAI 
 
-# make intermediate directory
-# mkdir intermediate
-# mkdir intermediate/ribosomal_genes
+for filename in $(cat ribosomal_genes.txt); 
+    do curl "https://data.orthodb.org/current/fasta?species=$level&id="$filename  -L -o $filename.faa
+done 
 
-# cd ..
-# cd Genefiltering/BUSCO/busco_out
+for file in *faa; do mkdir ${file%.faa} && mv $file ${file%.faa}; done
 
-# for filename in $(cat ../../../CUB_analysis/ribosomal_genes.txt); 
-#    do cat *.faa/run_sordariomycetes_odb10/busco_sequences/single_copy_busco_sequences/$filename > ${filename%.fna}combined.fna
-#    done 
+cd ../..
+ln -sr assemblies/*/*faa intermediate/ribosomal_genes 
+ln -sr scripts/blast.sh intermediate/ribosomal_genes 
+ln -sr scripts/codonw_cai.sh intermediate/ribosomal_genes 
 
-# check if output is empty. if so, download AA Sequences. <- downloads AA sequences only.. so maybe not ideal?  
- 
-# for file in *combined.fna;
-# do FILE="$file";
-#    if [ -s "$FILE" ]; 
-#     then
-#        echo "all done with getting ribosomal genes for ${file%combined.fna}"
-#     else 
-#      echo "no ribosomal genes in busco run. Downloading ribosomal ${file%combined.fna} fasta genes from OrthoDB"
-#      rm $file
-#        for filename in $(cat ../../../CUB_analysis/ribosomal_genes.txt); 
-#            do curl "https://data.orthodb.org/current/fasta?species=$level&id="$filename  -L -o $filename.faa
-#        done 
-#    fi
-#done
+cd intermediate/ribosomal_genes 
+for dir in *at147550; do cp *faa $dir; done 
+rm *faa 
 
+#run blast and select best hit 
+nohup bash blast.sh &> blast.log 
+wait 
 
-#cd ../../..
-#mv Genefiltering/BUSCO/busco_out/*at147550* CUB_analysis/intermediate/ribosomal_genes
-#cd CUB_analysis
-#mv *tsv intermediate/ribosomal_genes
-#mv *txt intermediate/ribosomal_genes
+# prep CAI by making a cai.coa file 
+ls */*ribo.faa > file.list
+sed 's_.*/__' file.list > tmp && mv tmp file.list
 
+cat file.list | while read line 
+do cat */$line > ${line%.ribo.faa}.cai-file; 
+done 
+
+cd ../..
+cp intermediate/ribosomal_genes/*cai-file assemblies 
+for dir in assemblies/*; do ln -sr scripts/codonw_cai.sh $fir; done 
+cd assemblies  
+
+# prep cai.coa file 
+for file in *.cai-file;
+    do mv $file ${file%.cai-file};
+done 
+
+for dir in *; 
+    do cd $dir; 
+    nohup bash codonw_cai.sh &> codonw_cai.log; 
+    cd ..;    
+done 
 
 
 
