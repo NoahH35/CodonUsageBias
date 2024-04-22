@@ -18,50 +18,77 @@ cd ..
 
 # run CAI analysis in some way, using a codon table made from the ribosomal genes
 
-mkdir intermediate
-mkdir intermediate/ribosomal_genes
+# mkdir intermediate
+# mkdir intermediate/ribosomal_genes
 
 # find ribosomal genes 
-cd intermediate/ribosomal_genes
-curl 'https://data.orthodb.org/current/search?query=ribosomes&level='$level -L -o ribosomes.tsv
+#cd intermediate/ribosomal_genes
+#curl 'https://data.orthodb.org/current/search?query=ribosomes&level='$level -L -o ribosomes.tsv
 
 # parse this file to only keep the names
- grep -o "\w*147550" *tsv | sort | uniq > ribosomal_genes.txt #change level to desired level
+# grep -o "\w*147550" *tsv | sort | uniq > ribosomal_genes.txt #change level to desired level
 # you now have a list of ribosomal genes 
     # find ribosomal genes in gene_filtering BUSCO output 
     # input them as reference to codonw to analyze CAI 
 
-for filename in $(cat ribosomal_genes.txt); 
-    do curl "https://data.orthodb.org/current/fasta?species=$level&id="$filename  -L -o $filename.faa
-done 
+#for filename in $(cat ribosomal_genes.txt); 
+#    do curl "https://data.orthodb.org/current/fasta?species=$level&id="$filename  -L -o $filename.faa
+#done 
 
-for file in *faa; do mkdir ${file%.faa} && mv $file ${file%.faa}; done
+#for file in *faa; do mkdir ${file%.faa} && mv $file ${file%.faa}; done
 
-cd ../..
-ln -sr assemblies/*/*faa intermediate/ribosomal_genes 
-ln -sr scripts/blast.sh intermediate/ribosomal_genes 
-ln -sr scripts/codonw_cai.sh intermediate/ribosomal_genes 
+#cd ../..
+#ln -sr assemblies/*/*faa intermediate/ribosomal_genes 
+#ln -sr scripts/blast.sh intermediate/ribosomal_genes 
+#ln -sr scripts/codonw_cai.sh intermediate/ribosomal_genes 
 
-cd intermediate/ribosomal_genes 
-for dir in *at147550; do cp *faa $dir; done 
-rm *faa 
+#cd intermediate/ribosomal_genes 
+#for dir in *at147550; do cp *faa $dir; done 
+#rm *faa 
 
 #run blast and select best hit 
-nohup bash blast.sh &> blast.log 
-wait 
+#nohup bash blast.sh &> blast.log 
+#wait 
+
+#run interpro scan 
+
+# first translate filtered sequences
+
+    cd data/CDS*
+
+    module load bioinfo-tools
+    module load SeqKit
+
+    mkdir translated_filtered_genes 
+    seqkit translate --trim $1 > $1.AA.faa && mv $1.AA.faa translated_filtered_genes
+    cd ..
+
+    mv filtered_genes/translated_filtered_genes . 
+
+# run interpro scan 
+mkdir interpro 
+ln -sr data/translated_*/* interpro
+ln -sr scripts/interpro.sh interpro 
+cd interpro 
+for file in *AA.faa; do sbatch interpro $file; done 
+cd ..
+
+
+
+
 
 # prep CAI by making a cai.coa file 
-ls */*ribo.faa > file.list
-sed 's_.*/__' file.list > tmp && mv tmp file.list
+#ls */*ribo.faa > file.list
+#sed 's_.*/__' file.list > tmp && mv tmp file.list
 
-cat file.list | while read line 
-do cat */$line > ${line%.ribo.faa}.cai-file; 
-done 
+#cat file.list | while read line 
+#do cat */$line > ${line%.ribo.faa}.cai-file; 
+#done 
 
-cd ../..
-cp intermediate/ribosomal_genes/*cai-file assemblies 
-for dir in assemblies/*; do ln -sr scripts/codonw_cai.sh $fir; done 
-cd assemblies  
+#cd ../..
+#cp intermediate/ribosomal_genes/*cai-file assemblies 
+#for dir in assemblies/*; do ln -sr scripts/codonw_cai.sh $fir; done 
+#cd assemblies  
 
 # prep cai.coa file 
 for file in *.cai-file;
