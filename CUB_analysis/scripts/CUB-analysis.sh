@@ -9,7 +9,7 @@ mkdir data/internal
 
 cd ..
 cp -r Genefiltering/results/assemblies CUB_analysis
-cp -r Genefiltering/results/assemblies data/internal 
+cp -r Genefiltering/results/assemblies/* data/internal 
 
 cd CUB_analysis 
 
@@ -75,7 +75,7 @@ cd ..
 
 # run interpro scan 
 mkdir interpro 
-ln -sr data/translated_*/* interpro
+ln -sr data/internal/translated_*/* interpro
 ln -sr scripts/interpro.sh interpro 
 cd interpro 
 for file in *AA.faa; do sbatch interpro $file; done 
