@@ -4,8 +4,12 @@
 
 level=$1 
 
+mkdir data
+mkdir data/internal
+
 cd ..
 cp -r Genefiltering/results/assemblies CUB_analysis
+cp -r Genefiltering/results/assemblies data/internal 
 
 cd CUB_analysis 
 
@@ -54,16 +58,20 @@ cd ..
 
 # first translate filtered sequences
 
-    cd data/CDS*
+    cd data/internal 
+    mkdir filtered_genes 
+    mv *faa filtered_genes
 
     module load bioinfo-tools
     module load SeqKit
-
+    cd filtered_genes
     mkdir translated_filtered_genes 
+
     seqkit translate --trim $1 > $1.AA.faa && mv $1.AA.faa translated_filtered_genes
     cd ..
 
     mv filtered_genes/translated_filtered_genes . 
+cd ..
 
 # run interpro scan 
 mkdir interpro 
