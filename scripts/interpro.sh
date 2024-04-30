@@ -8,16 +8,8 @@
 #SBATCH -J interproscan
 #SBATCH -o interproscan.log
 
-cd data
-
-
 module load bioinfo-tools
-module load SeqKit
+module load InterProScan
 
-cd filtered_genes
-mkdir translated_filtered_genes 
-seqkit translate --trim $1 > $1.AA.faa && mv $1.AA.faa translated_filtered_genes
-cd ..
-
-mv filtered_genes/translated_filtered_genes . 
-
+# Give protein fasta as arg $1
+interproscan.sh --output-dir $1.interpro -cpu 20 -i $1 -dp -pa -appl Pfam --goterms --iprlookup

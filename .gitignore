@@ -5,7 +5,7 @@ error_logs/
 logs/
 results/
 intermediate/
-interpro-scan/
+interpro/
 
 # matches any files and directories with the name 
 CDS_filtered
