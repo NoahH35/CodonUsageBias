@@ -58,31 +58,28 @@ cd ..
 
 # first translate filtered sequences
 
-    cd data/internal 
-    mkdir filtered_genes 
-    mv *faa filtered_genes
+cd data
 
-    module load bioinfo-tools
-    module load SeqKit
-    cd filtered_genes
-    mkdir translated_filtered_genes 
+module load bioinfo-tools
+module load SeqKit
 
-    seqkit translate --trim $1 > $1.AA.faa && mv $1.AA.faa translated_filtered_genes
-    cd ..
-
-    mv filtered_genes/translated_filtered_genes . 
+cd filtered_genes
+mkdir translated_filtered_genes 
+seqkit translate --trim $1 > $1.AA.faa && mv $1.AA.faa translated_filtered_genes
 cd ..
 
-# run interpro scan 
-mkdir interpro 
-ln -sr data/internal/translated_*/* interpro
-ln -sr scripts/interpro.sh interpro 
-cd interpro 
-for file in *AA.faa; do sbatch interpro $file; done 
+mv filtered_genes/translated_filtered_genes . 
+
 cd ..
+mkdir interpro/AA_interpro
+ln -sr data/translated_filtered_genes/* interpro/AA_interpro
+ln -sr scripts/interpro.sh interpro/AA_interpro
+cd interpro/AA_interpro
+for file in *AA.faa; do mkdir $file.interpro; done 
+for file in *AA.faa; do sbatch interpro.sh $file; done 
 
-
-
+cd ../..
+nohup bash scripts/find-ribosomal.sh &> find_ribogenes.log 
 
 
 # prep CAI by making a cai.coa file 
