@@ -16,6 +16,7 @@ mamba create -n busco-env
     source deactivate 
 
 mamba env create -f r-env.yml
+mamba env create -f seqtk-environment.yml
 
 ) 2> error_create_conda_env.log 
 

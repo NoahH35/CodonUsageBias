@@ -24,7 +24,6 @@ Before running any scripts in the Genefiltering directory. Please do not forget 
     CUB analysis
             scripts 
             CUB-analysis.sh 
-            
             CAI:
             run interpro scan on filtered and translated genomes to find the PFAM domains 
             to this end, first trabnslate the filtered genes with seqkit
@@ -43,6 +42,8 @@ Before running any scripts in the Genefiltering directory. Please do not forget 
     cd ..
     sbatch scripts/translate.sh  # to perform interpro search for ribosomal genes 
     bash scripts/start_interpro.sh # to perform interpro search for ribosomal genes 
+    bash scripts/find-ribosomal.sh #to find ribosomal genes in interpro output, with genes listed in a file called rib_genes.txt 
+    bash scripts/finish-ribosomal.sh #to filter the ribosomal genes out of the fasta filtes of filtered genes. 
     
     cd ..; cd CUB_analysis 
     nohup bash CUB-analysis.sh &> perform_CUB_analysis.log & 
@@ -56,6 +57,13 @@ Make sure to check the error logs.
     nohup bash create-conda-envs.sh &> create-conda.log &
     cd ..; cd Genefiltering 
     nohup bash prep_dataset.sh &> prep_dataset.log & 
+
+    cd ..
+    sbatch scripts/translate.sh  # to perform interpro search for ribosomal genes 
+    bash scripts/start_interpro.sh # to perform interpro search for ribosomal genes 
+    bash scripts/find-ribosomal.sh #to find ribosomal genes in interpro output, with genes listed in a file called rib_genes.txt 
+    bash scripts/finish-ribosomal.sh #to filter the ribosomal genes out of the fasta filtes of filtered genes. 
+
     cd ..; cd CUB_analysis 
     nohup bash CUB-analysis.sh &> perform_CUB_analysis.log & 
 

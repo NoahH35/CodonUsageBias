@@ -20,92 +20,33 @@ for dir in assemblies;
         done 
 cd ..
 
-# run CAI analysis in some way, using a codon table made from the ribosomal genes
-
-# mkdir intermediate
-# mkdir intermediate/ribosomal_genes
-
-# find ribosomal genes 
-#cd intermediate/ribosomal_genes
-#curl 'https://data.orthodb.org/current/search?query=ribosomes&level='$level -L -o ribosomes.tsv
-
-# parse this file to only keep the names
-# grep -o "\w*147550" *tsv | sort | uniq > ribosomal_genes.txt #change level to desired level
-# you now have a list of ribosomal genes 
-    # find ribosomal genes in gene_filtering BUSCO output 
-    # input them as reference to codonw to analyze CAI 
-
-#for filename in $(cat ribosomal_genes.txt); 
-#    do curl "https://data.orthodb.org/current/fasta?species=$level&id="$filename  -L -o $filename.faa
-#done 
-
-#for file in *faa; do mkdir ${file%.faa} && mv $file ${file%.faa}; done
-
-#cd ../..
-#ln -sr assemblies/*/*faa intermediate/ribosomal_genes 
-#ln -sr scripts/blast.sh intermediate/ribosomal_genes 
-#ln -sr scripts/codonw_cai.sh intermediate/ribosomal_genes 
-
-#cd intermediate/ribosomal_genes 
-#for dir in *at147550; do cp *faa $dir; done 
-#rm *faa 
-
-#run blast and select best hit 
-#nohup bash blast.sh &> blast.log 
-#wait 
-
-#run interpro scan 
-
-# first translate filtered sequences
-
-cd data
-
-module load bioinfo-tools
-module load SeqKit
-
-cd filtered_genes
-mkdir translated_filtered_genes 
-seqkit translate --trim $1 > $1.AA.faa && mv $1.AA.faa translated_filtered_genes
-cd ..
-
-mv filtered_genes/translated_filtered_genes . 
-
-cd ..
-mkdir interpro/AA_interpro
-ln -sr data/translated_filtered_genes/* interpro/AA_interpro
-ln -sr scripts/interpro.sh interpro/AA_interpro
-cd interpro/AA_interpro
-for file in *AA.faa; do mkdir $file.interpro; done 
-for file in *AA.faa; do sbatch interpro.sh $file; done 
-
-cd ../..
-nohup bash scripts/find-ribosomal.sh &> find_ribogenes.log 
-
 
 # prep CAI by making a cai.coa file 
-#ls */*ribo.faa > file.list
-#sed 's_.*/__' file.list > tmp && mv tmp file.list
+cd ..
+cp interpro/results/ribo*/*/ribosomal_* CUB_analysis/assemblies 
+cd CUB_analysis/assemblies
 
-#cat file.list | while read line 
-#do cat */$line > ${line%.ribo.faa}.cai-file; 
-#done 
-
-#cd ../..
-#cp intermediate/ribosomal_genes/*cai-file assemblies 
-#for dir in assemblies/*; do ln -sr scripts/codonw_cai.sh $fir; done 
-#cd assemblies  
-
-# prep cai.coa file 
-for file in *.cai-file;
-    do mv $file ${file%.cai-file};
+for file in *faa.faa; do mv $file ${file%.faa.faa}; done 
+for file in ribosomal*; do mv $file ${file#ribosomal_}; done
+for dir in *;
+    do cd $dir 
+    for file in ribosomal_*
+        do mv $file $file.cai-file
+    done 
+    cd ..
 done 
+cd ..
 
+
+for dir in assemblies/*; do ln -sr scripts/codonw_cai.sh $dir; done 
+cd assemblies  
+
+# run codonw_cai.sh 
 for dir in *; 
     do cd $dir; 
     nohup bash codonw_cai.sh &> codonw_cai.log; 
     cd ..;    
 done 
-
 
 
 # prep analysis 
@@ -123,6 +64,9 @@ for dir in *
     wait
 
 cd .. 
+
+# grscu info 
+echo "for the grscu, the following applies: The output is col 1: the gene identifier; col 2: the gRSCU based on the mean RSCU value observed in a gene; col 3: the gRSCU based on the median RSCU value observed in a gene; and the col 4: the standard deviation of RSCU values observed in a gene."
 
 
 # make plots
@@ -212,6 +156,14 @@ mkdir results/AA_freq
     mv assemblies/*/*charfreq results/AA_freq
     mv assemblies/*/*rscu results/rscu
     mv assemblies/*/*out results/codonw
+    cd results/codonw; rm ribosomal*
+    mkdir totals; mv *totals.out totals  
+    mkdir indiv_genes; mv *out indiv_genes
+    cd ../..
+
+# concat totals 
+grep "" * > totals.out 
+
 
 ) 2> error_CUB-analysis.log 
 

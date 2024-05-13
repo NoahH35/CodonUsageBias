@@ -1,0 +1,7 @@
+name: seqtk-env
+channels:  
+  - defaults
+  - conda-forge
+  - bioconda
+dependencies:
+  - seqtk=1.3-r106

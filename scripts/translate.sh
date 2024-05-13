@@ -8,9 +8,8 @@
 #SBATCH -J interproscan
 #SBATCH -o interproscan.log
 
-
-module load bioinfo-tools
-module load SeqKit
+source /home/noah/mambaforge/etc/profile.d/conda.sh
+source activate seqtk-env
 
 cd data/filtered_genes
 mkdir translated_filtered_genes 

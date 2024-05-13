@@ -1,14 +1,14 @@
 #!/bin/bash 
 
 #clean-up directory 
-# mkdir interpro/results
-# mkdir interpro/results/interpro
+ mkdir interpro/results
+ mkdir interpro/results/interpro
  mkdir interpro/results/gff3 
  mkdir interpro/results/ribo_genes
  ln -sr data/ribo_genes.txt interpro/results/gff3
 
 cd interpro
-# mv AA_interpro/*interpro results/interpro
+mv AA_interpro/*interpro results/interpro
 ln -sr results/interpro/*/*gff3 results/gff3
 cd results/gff3
 
@@ -29,8 +29,10 @@ for file in domains_*;
 done 
 
 # clean-up file names 
-for file in domains*; do mv $file ${file%.faa.AA.gff3.txt}.gff3
+for file in domains*; do mv $file ${file%.faa.AA.gff3.txt}.gff3; done 
 for file in ribgenes*; do mv $file ${file%.faa.AA.faa.gff3.txt}.txt; done 
 
 cd ..
 mv gff3/ribgenes_* ribo_genes
+
+#END
