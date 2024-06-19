@@ -13,6 +13,19 @@ cp -r Genefiltering/results/assemblies/* data/internal
 
 cd CUB_analysis 
 
+# run biokit on ribosomal genes 
+for dir in assemblies/*; do ln -sr scripts/biokit1.sh $dir; done 
+cd assemblies 
+for dir in *
+    do cd $dir
+    nohup bash biokit.sh &> biokit1.log &
+    cd ..
+    done 
+    wait
+
+cd ..
+
+# work on entire genomes 
 for dir in assemblies; 
     do cd $dir
         for file in filtered*; do mv $file ${file#filtered_}; done
@@ -25,6 +38,8 @@ cd ..
 cd ..
 cp interpro/results/ribo*/*/ribosomal_* CUB_analysis/assemblies 
 cd CUB_analysis/assemblies
+
+
 
 for file in *faa.faa; do mv $file ${file%.faa.faa}; done 
 for file in ribosomal*; do mv $file ${file#ribosomal_}; done
@@ -50,10 +65,11 @@ done
 
 
 # prep analysis 
-for dir in assemblies/*; do ln -sr scripts/codonw.sh $dir; done 
 for dir in assemblies/*; do ln -sr scripts/biokit.sh $dir; done 
+for dir in assemblies/*; do ln -sr scripts/codonw.sh $dir; done 
 
-# run biokit and codonw 
+
+# run codonw 
 cd assemblies 
 for dir in *
     do cd $dir
@@ -159,7 +175,66 @@ mkdir results/AA_freq
     cd results/codonw; rm ribosomal*
     mkdir totals; mv *totals.out totals  
     mkdir indiv_genes; mv *out indiv_genes
-    cd ../..
+    cd ..
+    cd rscu
+    mkdir grscu; mv *.grscu grscu
+    mkdir rscu; mv *.rscu rscu
+    cd rscu
+
+# clean up rscu data for graphical interfaces 
+for file in *rscu; do sort $file > sorted_$file; done 
+    #add first line as filename 
+    for file in sorted*; 
+    do awk 'BEGIN{OFS="       "}NR==1{print "CUB",FILENAME}{print $1,$2}' $file > tmp && mv tmp $file;
+    done  
+
+#clean up filename in file 
+for file in sorted*;
+    do sed -i 's/sorted_//g' $file; 
+    sed -i 's/.rscu//g' $file; 
+done 
+
+# concat files 
+awk -v OFS=' ' '{
+   a[$1][ARGIND] = $2
+}
+END {
+   for (i in a) {
+      printf "%s", i
+      for (j=1; j<ARGC; j++)
+         printf "%s", OFS (j in a[i] ? a[i][j] : "-----")
+      print ""
+   }
+}' sorted* > rscu.csv
+
+#same for AA_freq
+
+cd ../..
+cd AA_freq
+for file in *charfreq; do sort $file > sorted_$file; done 
+    #add first line as filename 
+    for file in sorted*; 
+    do awk 'BEGIN{OFS="       "}NR==1{print "AA",FILENAME}{print $1,$2}' $file > tmp && mv tmp $file;
+    done  
+
+#clean up filename in file 
+for file in sorted*;
+    do sed -i 's/fasta.charfreq//g' $file; 
+    sed -i 's/sorted_//g' $file; 
+done 
+
+awk -v OFS=' ' '{
+   a[$1][ARGIND] = $2
+}
+END {
+   for (i in a) {
+      printf "%s", i
+      for (j=1; j<ARGC; j++)
+         printf "%s", OFS (j in a[i] ? a[i][j] : "-----")
+      print ""
+   }
+}' sorted* > AA_freq.csv
+
 
 # concat totals 
 grep "" * > totals.out 
