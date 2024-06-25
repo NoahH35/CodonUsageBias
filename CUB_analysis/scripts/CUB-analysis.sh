@@ -87,13 +87,12 @@ echo "for the grscu, the following applies: The output is col 1: the gene identi
 
 # make plots
 for dir in assemblies/*; 
-    do cp scripts/neutrality_plots.r $dir && cp scripts/ENC_GC3.r $dir 
+    do cp scripts/neutrality_plots.r $dir && cp scripts/ENC_GC3.r $dir && cp scripts/ENCexp-ENCobs.r $dir 
 done  
 
 source /home/noah/mambaforge/etc/profile.d/conda.sh
 conda activate r-env
 nohup Rscript scripts/install_vhcub.r 
-
 cd assemblies 
 
 
@@ -107,7 +106,13 @@ for dir in *
     done 
 wait 
 
+for dir in *; 
+    do cd $dir && nohup Rscript ENCexp-ENCobs.r &> ENCexp-ENCobs.log 
 cd ..
+
+#calculate number of genes where ENCobs < ENCexp  
+
+
 
 
 #clean up logs 
@@ -160,11 +165,20 @@ mkdir results/neutrality
 mkdir results/rscu 
 mkdir results/codonw
 mkdir results/AA_freq
+mkdir results/ribosomal_rscu
 
     cd assemblies
     for dir in *; do cp $dir/ENC.GC3.png $dir.ENC_GC3.png; done
     cd .. 
     mv assemblies/*.ENC_GC3.png results/ENC_GC3
+    
+    cd assemblies
+    for dir in *; do cp $dir/ribosomal*rscu $dir.ribosomal_rscu; done
+    cd .. 
+    mv assemblies/*ribosomal_rscu results/ribosomal_rscu
+   
+   
+   
     cd assemblies
     for dir in *; do cp $dir/neutralityplot.png $dir.neutralityplot.png; done
     cd .. 
