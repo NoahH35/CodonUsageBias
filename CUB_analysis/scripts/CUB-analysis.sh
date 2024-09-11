@@ -87,12 +87,12 @@ echo "for the grscu, the following applies: The output is col 1: the gene identi
 
 # make plots
 for dir in assemblies/*; 
-    do cp scripts/neutrality_plots.r $dir && cp scripts/ENC_GC3.r $dir && cp scripts/ENCexp-ENCobs.r $dir 
+    do ln -sr scripts/neutrality_plots.r $dir && ln -sr scripts/ENC_GC3.r $dir && ln -sr scripts/ENCexp-ENCobs.r $dir && ln -sr scripts/selectedGenes.r $dir
 done  
 
 source /home/noah/mambaforge/etc/profile.d/conda.sh
 conda activate r-env
-nohup Rscript scripts/install_vhcub.r 
+# nohup Rscript scripts/install_vhcub.r 
 cd assemblies 
 
 
@@ -100,18 +100,15 @@ for dir in *
     do 
     cd $dir && nohup Rscript neutrality_plots.r &> neutrality_plots.log 
     cd ..
+    cd $dir && nohup Rscript selectedGenes.r &> selectedGenes.log 
+    cd ..
     cd $dir && awk '{ gsub(/[\t]/,";"); print }' $dir.out > output.txt
     nohup Rscript ENC_GC3.r &> ENC_GC3.log 
     cd ..
+        cd $dir && nohup Rscript nENCexp-ENCobs.r &> ENCpercentage.log 
+    cd ..
     done 
 wait 
-
-for dir in *; 
-    do cd $dir && nohup Rscript ENCexp-ENCobs.r &> ENCexp-ENCobs.log 
-cd ..
-
-#calculate number of genes where ENCobs < ENCexp  
-
 
 
 
@@ -135,6 +132,10 @@ cd ..
     for dir in *; do cp $dir/neutrality_plots.log $dir.neutrality.log; done 
     cd ..
     mv assemblies/*neutrality.log logs 
+    cd assemblies
+    for dir in *; do cp $dir/selectedGenes.log $dir.selectedGenes.log; done
+    cd ..
+    mv assemblies/*selectedGenes.log logs
     cd assemblies  
     for dir in *; do cp $dir/warnings_codonw.log $dir.codonw_error_log; done 
     cd ..
@@ -171,7 +172,12 @@ mkdir results/ribosomal_rscu
     for dir in *; do cp $dir/ENC.GC3.png $dir.ENC_GC3.png; done
     cd .. 
     mv assemblies/*.ENC_GC3.png results/ENC_GC3
-    
+
+    cd assemblies
+    for dir in *; do cp $dir/GenesUnderSelection.txt  $dir.genesUnderSelection.txt; done
+    cd .. 
+    mv assemblies/*.genesUnderSelection.txt results/ENC_GC3
+
     cd assemblies
     for dir in *; do cp $dir/ribosomal*rscu $dir.ribosomal_rscu; done
     cd .. 
@@ -181,13 +187,23 @@ mkdir results/ribosomal_rscu
    
     cd assemblies
     for dir in *; do cp $dir/neutralityplot.png $dir.neutralityplot.png; done
+    for dir in *; do cp $dir/statcor.txt $dir.statcor.txt; done 
+    for dir in *; do cp $dir/encpercentage.txt $dir.enc.txt; done
+    
     cd .. 
     mv assemblies/*.neutralityplot.png results/neutrality
+    mv assemblies/*statcor.txt results/neutrality
     mv assemblies/*/*charfreq results/AA_freq
     mv assemblies/*/*rscu results/rscu
     mv assemblies/*/*out results/codonw
+    mv assemblies/*.enc.txt results/codonw
     cd results/codonw; rm ribosomal*
     mkdir totals; mv *totals.out totals  
+                  mv *enc.txt* totals 
+                  cd totals 
+                  for file in *enc.txt; do sed -i -e 1i${file%.enc.txt} $file; done 
+                  for file in *enc.txt; do paste $file ${file%enc.txt}totals.out > done-$file; done  
+
     mkdir indiv_genes; mv *out indiv_genes
     cd ..
     cd rscu
@@ -266,5 +282,23 @@ if [ -s "$FILE" ];
 
 fi
 
+
+# neutrality reglines 
+cd :~/CUB_analysis/CUB_analysis/results/neutrality-reg
+
+for file in *statcor.txt; 
+do mkdir ${file%.statcor.txt} && mv $file  ${file%.statcor.txt}; 
+done 
+
+for dir in *;
+do cd $dir; 
+    grep "p-value" *statcor.txt > statcor2.txt
+    grep -A 1 " cor " *statcor.txt > statcor3.txt
+    tr -d '\n' < statcor3.txt > statcor4.txt 
+    paste statcor4.txt statcor2.txt > $dir.txt 
+cd ..
+for dir in *; do cp $dir/$dir.txt .; done 
+
+ grep "" *.txt > statcor.txt  
 #END
 

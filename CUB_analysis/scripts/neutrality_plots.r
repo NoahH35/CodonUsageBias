@@ -3,8 +3,9 @@
 library(xlsx)
 library(ggplot2)
 library(ggpubr)
+library(ggpmisc)
 
-  #change to correct directory for the genome you are working on by adding to the end 
+#change to correct directory for the genome you are working on by adding to the end 
 # read in gc1, gc2 and gc3 
 gc1 <- read.table("gc1", header = FALSE)
 gc2 <- read.table("gc2", header = FALSE)
@@ -20,20 +21,43 @@ df$gc12 <- rowMeans(df[ , c(1,2)], na.rm=TRUE)
 #create X and Y axis
 gc12 = df$gc12
 gc3 = df$V2.2
+colnames(df) <- c("gc1", "gc2", "gc3", "gc12")
 
-#option 1: do not include Pearson's rho and p-value 
+
+#calculate means and output to a text file 
+mean12 <- mean(gc12)
+mean3 <- mean(gc3)
+cat(mean12 ,file="mean12.txt")
+cat(mean3 ,file="mean3.txt")
+
 #make png
+formula <- y ~ x
+
 png("neutralityplot.png", width = 200, height = 200, units = 'mm', res = 300)
-ggplot(df, aes(x=gc3, y=gc12)) + geom_hex() + geom_smooth(method=lm, se=FALSE, col='red') + stat_regline_equation(label.y = 0.05, size = 6) +
-    theme (axis.text = element_text(size = 15), text = element_text(size = 20)) + xlim(0,1.05) +ylim(0,1.05) +
-    ggtitle(" ") + theme(plot.title = element_text(hjust = 0.5)) 
+ggplot(df, aes(x=gc3, y=gc12)) + 
+  geom_bin2d(bins = 150)  +
+  scale_fill_continuous(type = "viridis") +
+  geom_smooth(method=lm, se=FALSE, col='red') +
+  stat_poly_eq(aes(label = paste(..eq.label.., ..rr.label.., sep = "~~~")), 
+               label.x.npc = "left", label.y = 0.95,
+               formula = formula, parse = TRUE, size = 4) +
+  stat_cor(label.x.npc = "left", label.y.npc = 0.90) +
+  theme (axis.text = element_text(size = 15), text = element_text(size = 20)) + 
+  xlim(0.20,1.05) +ylim(0,1.05) 
+  ggtitle(" ")  
 dev.off()
 
-  #change text  sizes: https://statisticsglobe.com/change-font-size-of-ggplot2-plot-in-r-axis-text-main-title-legend
-  #geom_hex: hexagonal density plot 
-  #ggtitle: plot title 
-  #theme: plot title size 
-  #xlim and ylim: ranges of x and y
+
+statcor <- cor.test(df$gc12, df$gc3, method = "pearson")
+sink(file="statcor.txt")
+statcor
+sink()
+
+#change text  sizes: https://statisticsglobe.com/change-font-size-of-ggplot2-plot-in-r-axis-text-main-title-legend
+#geom_hex: hexagonal density plot 
+#ggtitle: plot title 
+#theme: plot title size 
+#xlim and ylim: ranges of x and y
 
 
 #make plot
@@ -58,22 +82,22 @@ dev.off()
 #include R2 and P-value 
 
 #option 2:
-  #write labels for trendline and R2
- # lm_eqn <- function(df){
- # +     m <- lm(gc12 ~ gc3, df);
- # +     eq <- substitute(italic(y) == a + b %.% italic(x)*","~~italic(r)^2~"="~r2, 
- #                        +                      list(a = format(unname(coef(m)[1]), digits = 2),
- #                                                    +                           b = format(unname(coef(m)[2]), digits = 2),
- #                                                    +                           r2 = format(summary(m)$r.squared, digits = 3)))
- # +     as.character(as.expression(eq));
- # + }
+#write labels for trendline and R2
+# lm_eqn <- function(df){
+# +     m <- lm(gc12 ~ gc3, df);
+# +     eq <- substitute(italic(y) == a + b %.% italic(x)*","~~italic(r)^2~"="~r2, 
+#                        +                      list(a = format(unname(coef(m)[1]), digits = 2),
+#                                                    +                           b = format(unname(coef(m)[2]), digits = 2),
+#                                                    +                           r2 = format(summary(m)$r.squared, digits = 3)))
+# +     as.character(as.expression(eq));
+# + }
 
-  #plot  
+#plot  
 #  ggplot(df, aes(x=gc3, y=gc12)) + geom_hex() + geom_smooth(method=lm, se=FALSE, col='red') + geom_text(aes(x = 0.25, y = 0.1, label = lm_eqn(df)), parse = TRUE)
 
-  
-  
-  #to save plot as png 
+
+
+#to save plot as png 
 #  png("neutralityplot.png", width = 400, height = 400, units = 'mm', res = 300)
 #  ggplot(df, aes(x=gc3, y=gc12)) + geom_hex() + geom_smooth(method=lm, se=FALSE, col='red') + geom_text(aes(x = 0.25, y = 0.1, label = lm_eqn(df)), parse = TRUE)
 #  dev.off()

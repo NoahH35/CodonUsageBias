@@ -1,1 +1,0 @@
-scripts/codonw_cai.sh
