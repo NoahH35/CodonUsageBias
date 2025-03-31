@@ -2,47 +2,11 @@
 #this script performs CUB-analysis, using both scripts biokit.sh and codonw.sh 
 (
 
-level=$1 
-
-mkdir data
-mkdir data/internal
-
-cd ..
-cp -r Genefiltering/results/assemblies CUB_analysis
-cp -r Genefiltering/results/assemblies/* data/internal 
-
-cd CUB_analysis 
-
-# run biokit on ribosomal genes 
-for dir in assemblies/*; do ln -sr scripts/biokit1.sh $dir; done 
-cd assemblies 
-for dir in *
-    do cd $dir
-    nohup bash biokit.sh &> biokit1.log &
-    cd ..
-    done 
-    wait
-
-cd ..
-
 # work on entire genomes 
-for dir in assemblies; 
-    do cd $dir
-        for file in filtered*; do mv $file ${file#filtered_}; done
-        for file in *faa; do mkdir ${file%.faa} && mv $file ${file%.faa}; done   
-        done 
-cd ..
-
+cd assemblies; 
+        for dir in filtered*; do mv $dir ${dir#filtered_}; done
 
 # prep CAI by making a cai.coa file 
-cd ..
-cp interpro/results/ribo*/*/ribosomal_* CUB_analysis/assemblies 
-cd CUB_analysis/assemblies
-
-
-
-for file in *faa.faa; do mv $file ${file%.faa.faa}; done 
-for file in ribosomal*; do mv $file ${file#ribosomal_}; done
 for dir in *;
     do cd $dir 
     for file in ribosomal_*
@@ -50,8 +14,8 @@ for dir in *;
     done 
     cd ..
 done 
-cd ..
 
+cd ..
 
 for dir in assemblies/*; do ln -sr scripts/codonw_cai.sh $dir; done 
 cd assemblies  
@@ -62,7 +26,8 @@ for dir in *;
     nohup bash codonw_cai.sh &> codonw_cai.log; 
     cd ..;    
 done 
-
+cd ..
+wait
 
 # prep analysis 
 for dir in assemblies/*; do ln -sr scripts/biokit.sh $dir; done 
@@ -92,7 +57,6 @@ done
 
 source /home/noah/mambaforge/etc/profile.d/conda.sh
 conda activate r-env
-# nohup Rscript scripts/install_vhcub.r 
 cd assemblies 
 
 
@@ -100,12 +64,13 @@ for dir in *
     do 
     cd $dir && nohup Rscript neutrality_plots.r &> neutrality_plots.log 
     cd ..
+    cd $dir && awk '{ gsub(/[\t]/,";"); print }' filtered_$dir.out > output.txt
+    cd ..
     cd $dir && nohup Rscript selectedGenes.r &> selectedGenes.log 
     cd ..
-    cd $dir && awk '{ gsub(/[\t]/,";"); print }' $dir.out > output.txt
-    nohup Rscript ENC_GC3.r &> ENC_GC3.log 
+    cd $dir && nohup Rscript ENC_GC3.r &> ENC_GC3.log 
     cd ..
-        cd $dir && nohup Rscript nENCexp-ENCobs.r &> ENCpercentage.log 
+    cd $dir && nohup Rscript ENCexp-ENCobs.r &> ENCpercentage.log 
     cd ..
     done 
 wait 
@@ -113,8 +78,9 @@ wait
 
 
 #clean up logs 
-    mkdir logs 
-    mkdir error_logs 
+cd ..
+mkdir logs 
+mkdir error_logs 
        
     cd assemblies
     for dir in *; do cp $dir/codonw.log $dir.codonw_log; done
@@ -162,11 +128,11 @@ if [ "$(ls -A error_logs)" ];
 #clean up results
 mkdir results
 mkdir results/ENC_GC3
-mkdir results/neutrality
+mkdir results/neutrality-plots
+mkdir results/statcor
 mkdir results/rscu 
 mkdir results/codonw
 mkdir results/AA_freq
-mkdir results/ribosomal_rscu
 
     cd assemblies
     for dir in *; do cp $dir/ENC.GC3.png $dir.ENC_GC3.png; done
@@ -178,31 +144,41 @@ mkdir results/ribosomal_rscu
     cd .. 
     mv assemblies/*.genesUnderSelection.txt results/ENC_GC3
 
-    cd assemblies
-    for dir in *; do cp $dir/ribosomal*rscu $dir.ribosomal_rscu; done
-    cd .. 
-    mv assemblies/*ribosomal_rscu results/ribosomal_rscu
-   
+
    
    
     cd assemblies
     for dir in *; do cp $dir/neutralityplot.png $dir.neutralityplot.png; done
+    cd ..
+    mv assemblies/*.neutralityplot.png results/neutrality-plots
+
+    cd assemblies
     for dir in *; do cp $dir/statcor.txt $dir.statcor.txt; done 
+    cd ..
+    mv assemblies/*.statcor.txt results/statcor
+
+    cd assemblies
     for dir in *; do cp $dir/encpercentage.txt $dir.enc.txt; done
-    
     cd .. 
-    mv assemblies/*.neutralityplot.png results/neutrality
-    mv assemblies/*statcor.txt results/neutrality
-    mv assemblies/*/*charfreq results/AA_freq
-    mv assemblies/*/*rscu results/rscu
-    mv assemblies/*/*out results/codonw
     mv assemblies/*.enc.txt results/codonw
-    cd results/codonw; rm ribosomal*
-    mkdir totals; mv *totals.out totals  
+    
+    cp assemblies/*/*charfreq results/AA_freq
+    cp assemblies/*/*rscu results/rscu
+    cp assemblies/*/*out results/codonw
+    
+    cd results/codonw
+    mkdir totals 
+    mv *totals.out totals  
                   mv *enc.txt* totals 
                   cd totals 
-                  for file in *enc.txt; do sed -i -e 1i${file%.enc.txt} $file; done 
-                  for file in *enc.txt; do paste $file ${file%enc.txt}totals.out > done-$file; done  
+                  for file in *enc.txt; do sed -i -e '1 i\DNC' $file; done 
+                  for file in *enc.txt; do paste filtered_${file%.enc.txt}.totals.out $file > ${file%enc.txt}txt; done 
+                  rm *enc*
+                  for file in *txt; do sed -i "s/Average of genes/${file%.txt}/g"  $file; done 
+                  rm *out
+                  grep "" * > totals.out 
+                  cd ..
+
 
     mkdir indiv_genes; mv *out indiv_genes
     cd ..
@@ -220,7 +196,7 @@ for file in *rscu; do sort $file > sorted_$file; done
 
 #clean up filename in file 
 for file in sorted*;
-    do sed -i 's/sorted_//g' $file; 
+    do sed -i 's/sorted_filtered_//g' $file; 
     sed -i 's/.rscu//g' $file; 
 done 
 
@@ -250,7 +226,7 @@ for file in *charfreq; do sort $file > sorted_$file; done
 #clean up filename in file 
 for file in sorted*;
     do sed -i 's/fasta.charfreq//g' $file; 
-    sed -i 's/sorted_//g' $file; 
+    sed -i 's/sorted_filtered_//g' $file; 
 done 
 
 awk -v OFS=' ' '{
@@ -265,10 +241,29 @@ END {
    }
 }' sorted* > AA_freq.csv
 
+cd ..
 
-# concat totals 
-grep "" * > totals.out 
+# neutrality reglines 
+cd statcor 
+for file in *statcor.txt; 
+do mkdir ${file%.statcor.txt} && mv $file  ${file%.statcor.txt}; 
+done 
 
+for dir in *;
+do cd $dir; 
+    grep "p-value" *statcor.txt > statcor2.txt && grep -A 1 " cor " *statcor.txt > statcor3.txt && tr -d '\n' < statcor3.txt > statcor4.txt && paste statcor4.txt statcor2.txt > $dir.txt; 
+cd ..;
+done 
+
+for dir in *; 
+    do cp $dir/$dir.txt .; 
+done 
+
+# rm -r */ #deletes directories only
+
+
+grep "" * > statcor.txt  
+cd ..
 
 ) 2> error_CUB-analysis.log 
 
@@ -283,22 +278,5 @@ if [ -s "$FILE" ];
 fi
 
 
-# neutrality reglines 
-cd :~/CUB_analysis/CUB_analysis/results/neutrality-reg
-
-for file in *statcor.txt; 
-do mkdir ${file%.statcor.txt} && mv $file  ${file%.statcor.txt}; 
-done 
-
-for dir in *;
-do cd $dir; 
-    grep "p-value" *statcor.txt > statcor2.txt
-    grep -A 1 " cor " *statcor.txt > statcor3.txt
-    tr -d '\n' < statcor3.txt > statcor4.txt 
-    paste statcor4.txt statcor2.txt > $dir.txt 
-cd ..
-for dir in *; do cp $dir/$dir.txt .; done 
-
- grep "" *.txt > statcor.txt  
 #END
 

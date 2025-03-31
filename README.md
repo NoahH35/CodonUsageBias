@@ -9,28 +9,22 @@ Before running any scripts in the Genefiltering directory. Please do not forget 
     conda-env
         contains yaml files for all conda environments
         create-conda-envs.sh 
-        additional tools: 
-            - blast 2.15.0
-            - bedtools v2.31.1
 
     CUB 
         Genefiltering
             CDS_filtered: in this directory, create single directories for each genome containing the .gff and .faa file for that genome 
             scripts: contains all scripts  
-            prep_dataset.sh
-            perform_busco.sh 
+            prep_dataset.sh 
            
 
     CUB analysis
             scripts 
             CUB-analysis.sh 
-            CAI:
-            run interpro scan on filtered and translated genomes to find the PFAM domains 
-            to this end, first trabnslate the filtered genes with seqkit
+            CAI needs a set of ribosomal proteins
             
 
 
-# To perform the entire pipeline, including BUSCO run, run (in order) the following 
+# To perform the entire pipeline run (in order) the following 
 
 ```
     cd conda-env 
@@ -39,37 +33,14 @@ Before running any scripts in the Genefiltering directory. Please do not forget 
     cd ..; cd Genefiltering 
     nohup bash prep_dataset.sh &> prep_dataset.log & 
 
-    cd ..
-    sbatch scripts/translate.sh  # to perform interpro search for ribosomal genes 
-    bash scripts/start_interpro.sh # to perform interpro search for ribosomal genes 
-    bash scripts/find-ribosomal.sh #to find ribosomal genes in interpro output, with genes listed in a file called rib_genes.txt 
-    bash scripts/finish-ribosomal.sh #to filter the ribosomal genes out of the fasta filtes of filtered genes. 
-    
+```
+
+After gene filtering, please copy your ribosomal fasta files of each <species> to the CUB_analysis/assemblies/<species> directory before continuing with the next step
+
+# Codon usage bias analysis 
+```
     cd ..; cd CUB_analysis 
     nohup bash CUB-analysis.sh &> perform_CUB_analysis.log & 
 ```
 
-Make sure to check the error logs. 
-
-# To perform the entire pipeline, without BUSCO run, run (in order) the following 
-
-    cd conda-env 
-    nohup bash create-conda-envs.sh &> create-conda.log &
-    cd ..; cd Genefiltering 
-    nohup bash prep_dataset.sh &> prep_dataset.log & 
-
-    cd ..
-    sbatch scripts/translate.sh  # to perform interpro search for ribosomal genes 
-    bash scripts/start_interpro.sh # to perform interpro search for ribosomal genes 
-    bash scripts/find-ribosomal.sh #to find ribosomal genes in interpro output, with genes listed in a file called rib_genes.txt 
-    bash scripts/finish-ribosomal.sh #to filter the ribosomal genes out of the fasta filtes of filtered genes. 
-
-    cd ..; cd CUB_analysis 
-    nohup bash CUB-analysis.sh &> perform_CUB_analysis.log & 
-
-# note: a BUSCO run can always be added later by running busco_added.sh from the Genefiltering directory like so: 
-    cd Genefiltering 
-    ln -sr scripts/busco_added.sh .
-    nohup bash busco_added.sh &> perform_busco.log & 
-
-Make sure to check the error logs when needed. 
+Please make sure to check the error logs. # CodonUsageBias

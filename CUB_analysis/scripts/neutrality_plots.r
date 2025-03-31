@@ -5,6 +5,7 @@ library(ggplot2)
 library(ggpubr)
 library(ggpmisc)
 
+
 #change to correct directory for the genome you are working on by adding to the end 
 # read in gc1, gc2 and gc3 
 gc1 <- read.table("gc1", header = FALSE)

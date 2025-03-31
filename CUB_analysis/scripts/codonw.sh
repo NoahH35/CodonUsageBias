@@ -4,10 +4,10 @@ source /home/noah/mambaforge/etc/profile.d/conda.sh
 conda activate codonw-env
 
  
-for file in *faa; do codonw -nomenu -totals -enc -gc3s -cai -cai_file cai.coa $file ${file%faa}totals.out ${file%faa}totals.blk; done
+for file in filtered*faa; do codonw -nomenu -totals -enc -gc3s -cai -cai_file cai.coa $file ${file%faa}totals.out ${file%faa}totals.blk; done
 wait
 
-for file in *faa; do codonw -nomenu -enc -gc3s -cai -cai_file cai.coa $file ${file%faa}out ${file%faa}blk; done
+for file in filtered*faa; do codonw -nomenu -enc -gc3s -cai -cai_file cai.coa $file ${file%faa}out ${file%faa}blk; done
 
 conda deactivate 
 

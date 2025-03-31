@@ -6,10 +6,10 @@ source /home/noah/mambaforge/etc/profile.d/conda.sh
 conda activate biokit-env 
 
 #relative synonymous codon usage 
-for file in *faa.faa; do biokit rscu $file > ${file%.faa.faa}.rscu; done 
+for file in ribosomal*faa; do biokit rscu $file > ${file%.faa}.rscu; done 
 
 #gene wise relative synonymous codon usage 
-for file in *faa.faa; do biokit grscu $file > ${file%.faa.faa}.grscu; done 
+for file in ribosomal*faa; do biokit grscu $file > ${file%.faa}.grscu; done 
 
 conda deactivate 
 
